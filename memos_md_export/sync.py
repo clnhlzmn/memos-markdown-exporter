@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import logging
 import os
+import signal
 import sys
-import time
+import threading
 
 from .client import MemosClient
 from .config import Config
@@ -106,13 +107,28 @@ def main() -> int:
     cfg = Config()
     if cfg.interval is None:
         return sync_once(cfg)
+
+    # Wake the loop on SIGTERM/SIGINT so `docker stop` returns promptly instead
+    # of waiting out the sleep (and its grace period) then getting SIGKILLed.
+    # Installing a handler also matters because we run as PID 1, where the
+    # default disposition is to *ignore* these signals rather than terminate.
+    stop = threading.Event()
+
+    def _handle(signum, _frame):
+        log.info("received %s, shutting down", signal.Signals(signum).name)
+        stop.set()
+
+    signal.signal(signal.SIGTERM, _handle)
+    signal.signal(signal.SIGINT, _handle)
+
     log.info("looping every %ds", cfg.interval)
-    while True:
+    while not stop.is_set():
         try:
             sync_once(cfg)
         except Exception as e:  # noqa: BLE001
             log.error("run failed: %s", e)
-        time.sleep(cfg.interval)
+        stop.wait(cfg.interval)
+    return 0
 
 
 if __name__ == "__main__":

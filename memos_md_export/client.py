@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import requests
 
-from .render import _get
-
 PAGE_SIZE = 1000  # API max; fewer round-trips
 
 
@@ -47,9 +45,9 @@ class MemosClient:
             for m in batch:
                 # defense in depth: never misfile another user's memo even if
                 # the server-side filter were ignored by some build.
-                if _get(m, "creator") == creator:
+                if m.get("creator") == creator:
                     memos.append(m)
-            page_token = body.get("nextPageToken") or body.get("next_page_token") or ""
+            page_token = body.get("nextPageToken", "")
             if not page_token:
                 break
         return memos

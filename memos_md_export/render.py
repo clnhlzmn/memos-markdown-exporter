@@ -1,7 +1,7 @@
 """Pure rendering + path-safety helpers.
 
-Turns a memo dict (protojson, camelCase with snake_case fallbacks) into the
-markdown file body with YAML frontmatter, plus filesystem-safety helpers.
+Turns a memo dict (protojson, camelCase field names) into the markdown file
+body with YAML frontmatter, plus filesystem-safety helpers.
 """
 
 from __future__ import annotations
@@ -11,14 +11,6 @@ import re
 from datetime import datetime, timezone
 
 UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
-
-
-def _get(memo: dict, *names: str):
-    """Fetch a field trying camelCase then snake_case variants."""
-    for n in names:
-        if n in memo and memo[n] is not None:
-            return memo[n]
-    return None
 
 
 def parse_time(value) -> datetime:
@@ -38,13 +30,13 @@ def parse_time(value) -> datetime:
 
 
 def memo_uid(memo: dict) -> str:
-    name = _get(memo, "name") or ""  # "memos/<uid>"
+    name = memo.get("name", "")  # "memos/<uid>"
     return name.split("/")[-1] if "/" in name else name
 
 
 def date_dir(memo: dict, basis: str, tz) -> str:
-    created = parse_time(_get(memo, "createTime", "create_time"))
-    updated = parse_time(_get(memo, "updateTime", "update_time"))
+    created = parse_time(memo["createTime"])
+    updated = parse_time(memo["updateTime"])
     dt = updated if basis == "updated" else created
     return dt.astimezone(tz).strftime("%Y-%m-%d")
 
@@ -60,18 +52,18 @@ def extract_attachments(memo: dict) -> list[dict]:
     for exact-path resolution options.
     """
     out: list[dict] = []
-    for a in _get(memo, "attachments") or []:
-        name = _get(a, "name") or ""          # attachments/<uid>
+    for a in memo.get("attachments", []):
+        name = a.get("name", "")              # attachments/<uid>
         a_uid = name.split("/")[-1] if "/" in name else name
-        filename = _get(a, "filename") or ""
+        filename = a.get("filename", "")
         rec = {
             "filename": filename,
             "uid": a_uid,
-            "type": _get(a, "type") or "",
+            "type": a.get("type", ""),
             # protojson encodes int64 as a string; coerce back to int.
-            "size": _coerce_int(_get(a, "size")),
+            "size": _coerce_int(a.get("size")),
         }
-        ext = _get(a, "externalLink", "external_link")
+        ext = a.get("externalLink")
         if ext:
             rec["external_link"] = ext
         elif a_uid and filename:
@@ -96,12 +88,12 @@ def _yaml_str(s: str) -> str:
 
 def render(memo: dict) -> str:
     uid = memo_uid(memo)
-    created = parse_time(_get(memo, "createTime", "create_time"))
-    updated = parse_time(_get(memo, "updateTime", "update_time"))
-    visibility = _get(memo, "visibility") or "PRIVATE"
-    pinned = bool(_get(memo, "pinned") or False)
-    content = _get(memo, "content") or ""
-    tags = _get(memo, "tags") or []
+    created = parse_time(memo["createTime"])
+    updated = parse_time(memo["updateTime"])
+    visibility = memo.get("visibility", "PRIVATE")
+    pinned = bool(memo.get("pinned"))
+    content = memo.get("content", "")
+    tags = memo.get("tags", [])
     attachments = extract_attachments(memo)
 
     lines = ["---", f"uid: {uid}",

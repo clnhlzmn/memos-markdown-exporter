@@ -88,17 +88,11 @@ def test_date_dir_timezone_shifts_bucket_across_midnight():
     # ~02:30Z is the previous evening in America/New_York (UTC-4/-5),
     # so the local date bucket is the day before.
     assert ZoneInfo is not None
-    memo = {"createTime": "2026-07-11T02:30:00Z"}
+    memo = {"createTime": "2026-07-11T02:30:00Z",
+            "updateTime": "2026-07-11T02:30:00Z"}
     tz = ZoneInfo("America/New_York")
     assert date_dir(memo, "created", tz) == "2026-07-10"
     assert date_dir(memo, "created", timezone.utc) == "2026-07-11"
-
-
-def test_date_dir_snake_case_input():
-    memo = {"create_time": "2026-07-10T10:00:00Z",
-            "update_time": "2026-07-11T10:00:00Z"}
-    assert date_dir(memo, "created", timezone.utc) == "2026-07-10"
-    assert date_dir(memo, "updated", timezone.utc) == "2026-07-11"
 
 
 # --------------------------------------------------------------------------- #
@@ -154,19 +148,6 @@ def test_render_defaults_visibility_private():
 def test_render_no_tags_omits_key():
     memo = _base_memo(tags=[])
     assert "tags:" not in render(memo)
-
-
-def test_render_snake_case_input():
-    memo = {
-        "name": "memos/xyz",
-        "create_time": "2026-01-01T00:00:00Z",
-        "update_time": "2026-01-02T00:00:00Z",
-        "content": "x",
-    }
-    out = render(memo)
-    assert "uid: xyz" in out
-    assert "created: 2026-01-01T00:00:00Z" in out
-    assert "updated: 2026-01-02T00:00:00Z" in out
 
 
 # --------------------------------------------------------------------------- #
@@ -235,14 +216,6 @@ def test_render_attachment_block_full_shape():
     assert "    uid: u1" in out
     assert "    type: image/png" in out
     assert "    size: 7" in out
-
-
-def test_render_attachment_snake_case_external_link():
-    memo = _base_memo(tags=[], attachments=[
-        {"name": "attachments/u1", "filename": "a.png", "size": 1,
-         "external_link": "https://ext/a.png"}])
-    out = render(memo)
-    assert "    external_link: \"https://ext/a.png\"" in out
 
 
 # --------------------------------------------------------------------------- #
