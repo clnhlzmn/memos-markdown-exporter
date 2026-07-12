@@ -10,7 +10,7 @@ import threading
 
 from .client import MemosClient
 from .config import Config
-from .render import date_dir, memo_uid, render, safe
+from .render import date_dir, memo_uid, render, safe, title_slug
 
 log = logging.getLogger("memos-export")
 
@@ -80,7 +80,11 @@ def sync_once(cfg: Config) -> int:
                 if sub:
                     parts.append(sub)
                 date = date_dir(memo, cfg.date_basis, cfg.tz)
-                parts.append(date + "_" + safe(memo_uid(memo)) + ".md")
+                stem = date + "_" + safe(memo_uid(memo))
+                slug = title_slug(memo)
+                if slug:
+                    stem += "_" + slug
+                parts.append(stem + ".md")
                 path = os.path.join(*parts)
                 write_if_changed(path, render(memo))
                 written.add(os.path.abspath(path))

@@ -18,12 +18,17 @@ A multi-arch Docker image is published to the GitHub Container Registry (GHCR).
 ## What it produces
 
 ```
-<export_dir>/<username>/<date>_<uid>.md
+<export_dir>/<username>/<date>_<uid>_<title>.md
 ```
 
 - `<date>` is `YYYY-MM-DD` from the memo's creation time (default) or update time.
 - `<uid>` is the memo's public id, so every memo maps to exactly one file and
   deletes prune cleanly.
+- `<title>` is a human-readable slug derived from the memo: the first markdown
+  heading (`# Title`) if present, otherwise the first line of real text (tag-only
+  lines are skipped). It is lowercased, hyphenated, and truncated to 50 chars.
+  Memos with no usable title (e.g. tags only, or empty) are just
+  `<date>_<uid>.md`.
 
 Each file has YAML frontmatter followed by the raw markdown content:
 

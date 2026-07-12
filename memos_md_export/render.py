@@ -12,6 +12,17 @@ from datetime import datetime, timezone
 
 UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
 
+# A markdown ATX heading: 1-6 leading '#', then whitespace, then text.
+_HEADING = re.compile(r"^#{1,6}\s+(.+)$")
+# A Memos tag token: '#' immediately followed by non-space text (no leading '#'
+# + space, which would be a heading). Bounded by start/space so we don't eat
+# '#' inside words.
+_TAG = re.compile(r"(?:^|\s)#\S+")
+# Inline markdown link/image: keep the visible text/alt, drop the target.
+_LINK = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+_SLUG_TRIM = re.compile(r"[^a-z0-9]+")
+_SLUG_MAX = 50
+
 
 def parse_time(value) -> datetime:
     """Parse an RFC3339 timestamp (protojson) into an aware UTC datetime."""
@@ -39,6 +50,50 @@ def date_dir(memo: dict, basis: str, tz) -> str:
     updated = parse_time(memo["updateTime"])
     dt = updated if basis == "updated" else created
     return dt.astimezone(tz).strftime("%Y-%m-%d")
+
+
+def _slugify(text: str) -> str:
+    """Lowercase, hyphenate, ASCII-only; truncated to _SLUG_MAX on a word edge."""
+    slug = _SLUG_TRIM.sub("-", text.lower()).strip("-")
+    if len(slug) <= _SLUG_MAX:
+        return slug
+    slug = slug[:_SLUG_MAX]
+    # Prefer cutting at the last hyphen so we don't split a word, unless that
+    # would throw away almost everything.
+    cut = slug.rfind("-")
+    if cut >= _SLUG_MAX // 2:
+        slug = slug[:cut]
+    return slug.strip("-")
+
+
+def title_slug(memo: dict) -> str:
+    """A human-readable filename fragment derived from a memo's content.
+
+    Prefers the first markdown heading (`# Title`); otherwise the first line
+    that still has text once tag tokens (`#word`) are removed. Returns "" when
+    nothing meaningful is found (e.g. tags-only or empty memos), so the caller
+    can omit the segment entirely.
+    """
+    content = memo.get("content", "") or ""
+    lines = [ln.strip() for ln in content.splitlines()]
+    lines = [ln for ln in lines if ln][:10]
+
+    chosen = ""
+    for ln in lines:
+        m = _HEADING.match(ln)
+        if m:
+            chosen = m.group(1)
+            break
+    if not chosen:
+        for ln in lines:
+            if _TAG.sub(" ", ln).strip():
+                chosen = ln
+                break
+
+    # Strip inline markdown noise before slugifying.
+    chosen = _LINK.sub(r"\1", chosen)   # links/images -> visible text
+    chosen = _TAG.sub(" ", chosen)      # drop tag tokens
+    return _slugify(chosen)
 
 
 def extract_attachments(memo: dict) -> list[dict]:

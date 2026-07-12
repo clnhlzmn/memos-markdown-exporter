@@ -16,6 +16,7 @@ from memos_md_export.render import (
     parse_time,
     render,
     safe,
+    title_slug,
 )
 
 
@@ -216,6 +217,71 @@ def test_render_attachment_block_full_shape():
     assert "    uid: u1" in out
     assert "    type: image/png" in out
     assert "    size: 7" in out
+
+
+# --------------------------------------------------------------------------- #
+# title_slug
+# --------------------------------------------------------------------------- #
+def test_title_slug_prefers_heading_over_earlier_lines():
+    memo = {"content": "#todo #home\n# Weekly Review\nsome body text"}
+    assert title_slug(memo) == "weekly-review"
+
+
+def test_title_slug_heading_on_first_line():
+    assert title_slug({"content": "# Groceries\n#todo"}) == "groceries"
+
+
+def test_title_slug_heading_deeper_level():
+    assert title_slug({"content": "### A Sub Heading"}) == "a-sub-heading"
+
+
+def test_title_slug_first_text_line_when_no_heading():
+    memo = {"content": "#idea just some plain text here"}
+    assert title_slug(memo) == "just-some-plain-text-here"
+
+
+def test_title_slug_skips_pure_tag_lines():
+    memo = {"content": "#todo #home\n#work\nActual content line"}
+    assert title_slug(memo) == "actual-content-line"
+
+
+def test_title_slug_tags_only_returns_empty():
+    assert title_slug({"content": "#todo #home\n#work"}) == ""
+
+
+def test_title_slug_empty_content_returns_empty():
+    assert title_slug({"content": ""}) == ""
+    assert title_slug({}) == ""
+
+
+def test_title_slug_strips_emphasis_and_links():
+    memo = {"content": "**Bold** _title_ with [a link](https://ex.com) end"}
+    assert title_slug(memo) == "bold-title-with-a-link-end"
+
+
+def test_title_slug_image_reduces_to_alt_text():
+    assert title_slug({"content": "![my photo](x.png) caption"}) == \
+        "my-photo-caption"
+
+
+def test_title_slug_truncates_long_title_on_word_boundary():
+    memo = {"content": "# " + " ".join(["word"] * 20)}
+    slug = title_slug(memo)
+    assert len(slug) <= 50
+    # cut at a hyphen -> no trailing partial "wor"
+    assert not slug.endswith("-")
+    assert slug.split("-")[-1] == "word"
+
+
+def test_title_slug_non_ascii_dropped():
+    # accents/CJK are not in [a-z0-9]; they collapse to separators.
+    assert title_slug({"content": "# Café Über"}) == "caf-ber"
+
+
+def test_title_slug_heading_hash_without_space_is_a_tag_not_heading():
+    # "#weekly" is a tag token, not a heading; falls through to first text line.
+    memo = {"content": "#weekly\nreal title"}
+    assert title_slug(memo) == "real-title"
 
 
 # --------------------------------------------------------------------------- #
