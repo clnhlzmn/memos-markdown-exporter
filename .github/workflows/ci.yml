@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install (with dev deps)
+        run: pip install .[dev]
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Test
+        run: pytest -q
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: memos-md-export:ci
+
+      - name: Smoke test — no config prints required-var error and exits non-zero
+        run: |
+          set +e
+          out="$(docker run --rm memos-md-export:ci 2>&1)"
+          code=$?
+          echo "$out"
+          if [ "$code" -eq 0 ]; then
+            echo "expected non-zero exit, got 0"; exit 1
+          fi
+          echo "$out" | grep -q "MEMOS_BASE_URL is required" \
+            || { echo "missing required-var message"; exit 1; }

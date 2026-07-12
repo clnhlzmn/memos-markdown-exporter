@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "memos-md-export"
+version = "0.1.0"
+description = "One-way sync of a memos (usememos.com) instance to a directory of markdown files."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Colin Holzman" }]
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.31,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "responses>=0.25",
+    "ruff>=0.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/clnhlzmn/memos-markdown-exporter"
+
+[project.scripts]
+memos-md-export = "memos_md_export.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["memos_md_export"]
+
+# target-version matches requires-python (3.9): the code runs on 3.9 (local dev
+# and via `from __future__ import annotations`) even though the image is 3.12,
+# so ruff must not suggest 3.10+ rewrites (e.g. datetime.UTC).
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
