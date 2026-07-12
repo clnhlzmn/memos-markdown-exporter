@@ -12,12 +12,6 @@ from datetime import datetime, timezone
 
 UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
 
-# A markdown ATX heading: 1-6 leading '#', then whitespace, then text.
-_HEADING = re.compile(r"^#{1,6}\s+(.+)$")
-# A Memos tag token: '#' immediately followed by non-space text (no leading '#'
-# + space, which would be a heading). Bounded by start/space so we don't eat
-# '#' inside words.
-_TAG = re.compile(r"(?:^|\s)#\S+")
 # Inline markdown link/image: keep the visible text/alt, drop the target.
 _LINK = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
 _SLUG_TRIM = re.compile(r"[^a-z0-9]+")
@@ -67,32 +61,13 @@ def _slugify(text: str) -> str:
 
 
 def title_slug(memo: dict) -> str:
-    """A human-readable filename fragment derived from a memo's content.
+    """Filename fragment: the memo's first non-empty line, slugified.
 
-    Prefers the first markdown heading (`# Title`); otherwise the first line
-    that still has text once tag tokens (`#word`) are removed. Returns "" when
-    nothing meaningful is found (e.g. tags-only or empty memos), so the caller
-    can omit the segment entirely.
+    Returns "" for empty memos so the caller can omit the segment.
     """
     content = memo.get("content", "") or ""
-    lines = [ln.strip() for ln in content.splitlines()]
-    lines = [ln for ln in lines if ln][:10]
-
-    chosen = ""
-    for ln in lines:
-        m = _HEADING.match(ln)
-        if m:
-            chosen = m.group(1)
-            break
-    if not chosen:
-        for ln in lines:
-            if _TAG.sub(" ", ln).strip():
-                chosen = ln
-                break
-
-    # Strip inline markdown noise before slugifying.
-    chosen = _LINK.sub(r"\1", chosen)   # links/images -> visible text
-    chosen = _TAG.sub(" ", chosen)      # drop tag tokens
+    chosen = next((ln.strip() for ln in content.splitlines() if ln.strip()), "")
+    chosen = _LINK.sub(r"\1", chosen)  # links/images -> visible text
     return _slugify(chosen)
 
 

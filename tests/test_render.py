@@ -222,31 +222,35 @@ def test_render_attachment_block_full_shape():
 # --------------------------------------------------------------------------- #
 # title_slug
 # --------------------------------------------------------------------------- #
-def test_title_slug_prefers_heading_over_earlier_lines():
+def test_title_slug_uses_first_nonempty_line():
     memo = {"content": "#todo #home\n# Weekly Review\nsome body text"}
-    assert title_slug(memo) == "weekly-review"
+    assert title_slug(memo) == "todo-home"
 
 
-def test_title_slug_heading_on_first_line():
+def test_title_slug_heading_hash_is_slugified_like_any_line():
     assert title_slug({"content": "# Groceries\n#todo"}) == "groceries"
 
 
-def test_title_slug_heading_deeper_level():
+def test_title_slug_deeper_heading_hash_dropped():
     assert title_slug({"content": "### A Sub Heading"}) == "a-sub-heading"
 
 
-def test_title_slug_first_text_line_when_no_heading():
+def test_title_slug_tags_are_kept_in_slug():
     memo = {"content": "#idea just some plain text here"}
-    assert title_slug(memo) == "just-some-plain-text-here"
+    assert title_slug(memo) == "idea-just-some-plain-text-here"
 
 
-def test_title_slug_skips_pure_tag_lines():
+def test_title_slug_tag_line_is_used_not_skipped():
     memo = {"content": "#todo #home\n#work\nActual content line"}
-    assert title_slug(memo) == "actual-content-line"
+    assert title_slug(memo) == "todo-home"
 
 
-def test_title_slug_tags_only_returns_empty():
-    assert title_slug({"content": "#todo #home\n#work"}) == ""
+def test_title_slug_tags_only_still_produces_slug():
+    assert title_slug({"content": "#todo #home\n#work"}) == "todo-home"
+
+
+def test_title_slug_skips_leading_blank_lines():
+    assert title_slug({"content": "\n\nHello world"}) == "hello-world"
 
 
 def test_title_slug_empty_content_returns_empty():
@@ -278,10 +282,10 @@ def test_title_slug_non_ascii_dropped():
     assert title_slug({"content": "# Café Über"}) == "caf-ber"
 
 
-def test_title_slug_heading_hash_without_space_is_a_tag_not_heading():
-    # "#weekly" is a tag token, not a heading; falls through to first text line.
+def test_title_slug_first_line_wins_over_later_lines():
+    # No heading/tag special-casing: the first non-empty line is used as-is.
     memo = {"content": "#weekly\nreal title"}
-    assert title_slug(memo) == "real-title"
+    assert title_slug(memo) == "weekly"
 
 
 # --------------------------------------------------------------------------- #
