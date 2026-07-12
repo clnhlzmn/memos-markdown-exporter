@@ -22,8 +22,8 @@ A multi-arch Docker image is published to the GitHub Container Registry (GHCR).
 ```
 
 - `<date>` is `YYYY-MM-DD` from the memo's creation time (default) or update time.
-- `<uid>` is the memo's public id, so every memo maps to exactly one file and
-  deletes prune cleanly.
+- `<uid>` is the first 8 characters of the memo's public id — enough to keep
+  same-date memos from colliding. The full uid is preserved in the frontmatter.
 - `<title>` is a human-readable slug derived from the memo's first non-empty
   line (links reduced to their visible text). It is lowercased, hyphenated, and
   truncated to 50 chars. Empty memos are just `<date>_<uid>.md`.

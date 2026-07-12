@@ -185,3 +185,36 @@ def test_sync_all_success_returns_zero_and_prunes(tmp_path, monkeypatch):
     assert (export / "alice" / "2026-07-11_m1_hi.md").exists()
     # orphan pruned
     assert not stale.exists()
+
+
+def test_sync_truncates_long_uid_in_filename_but_not_frontmatter(
+    tmp_path, monkeypatch
+):
+    export = tmp_path / "export"
+    export.mkdir()
+
+    _FakeClient.behaviors = {
+        "good": {
+            "creator": "users/1",
+            "username": "alice",
+            "memos": [{
+                "name": "memos/abcdefghijklmnop",
+                "creator": "users/1",
+                "createTime": "2026-07-11T00:00:00Z",
+                "updateTime": "2026-07-11T00:00:00Z",
+                "content": "hi",
+            }],
+        },
+    }
+    monkeypatch.setattr(sync, "MemosClient", _FakeClient)
+
+    cfg = _Cfg(str(export))
+    cfg.tokens = ["good"]
+
+    assert sync_once(cfg) == 0
+
+    # filename uses only the first 8 uid chars
+    f = export / "alice" / "2026-07-11_abcdefgh_hi.md"
+    assert f.exists()
+    # but the full uid is preserved in the frontmatter
+    assert "uid: abcdefghijklmnop" in f.read_text()

@@ -14,6 +14,11 @@ from .render import date_dir, memo_uid, render, safe, title_slug
 
 log = logging.getLogger("memos-export")
 
+# Only enough uid to keep same-date memos from colliding; combined with the
+# date and title slug, a short prefix is plenty. The full uid is still recorded
+# in each file's frontmatter (see render()).
+_UID_LEN = 8
+
 
 def write_if_changed(path: str, content: str) -> None:
     try:
@@ -80,7 +85,7 @@ def sync_once(cfg: Config) -> int:
                 if sub:
                     parts.append(sub)
                 date = date_dir(memo, cfg.date_basis, cfg.tz)
-                stem = date + "_" + safe(memo_uid(memo))
+                stem = date + "_" + safe(memo_uid(memo))[:_UID_LEN]
                 slug = title_slug(memo)
                 if slug:
                     stem += "_" + slug
