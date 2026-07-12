@@ -1,4 +1,4 @@
-# memos-md-export
+# memos-markdown-exporter
 
 > # ⚠️ 🤖 100% AI-GENERATED — NOT HAND-WRITTEN
 >
@@ -139,14 +139,14 @@ So the exporter emits what the API *does* give, per attachment: `filename`,
 Pull the published image (replace the tag as needed):
 
 ```bash
-docker pull ghcr.io/clnhlzmn/memos-md-export:latest
+docker pull ghcr.io/clnhlzmn/memos-markdown-exporter:latest
 
 docker run --rm \
   -e MEMOS_BASE_URL=http://memos:5230 \
   -e MEMOS_EXPORT_DIR=/export \
   -e MEMOS_TOKENS="tok_alice,tok_bob" \
   -v /path/on/host/export:/export \
-  ghcr.io/clnhlzmn/memos-md-export:latest
+  ghcr.io/clnhlzmn/memos-markdown-exporter:latest
 ```
 
 > The GHCR package is **private until you flip it public** in the repository's
@@ -171,7 +171,7 @@ services:
     # ...
 
   memos-export:
-    image: ghcr.io/clnhlzmn/memos-md-export:latest
+    image: ghcr.io/clnhlzmn/memos-markdown-exporter:latest
     profiles: ["tools"]          # not started by `up`; run on demand
     environment:
       MEMOS_BASE_URL: http://memos:5230
