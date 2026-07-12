@@ -18,12 +18,12 @@ A multi-arch Docker image is published to the GitHub Container Registry (GHCR).
 ## What it produces
 
 ```
-<export_dir>/<username>/<date>/<uid>.md
+<export_dir>/<username>/<date>_<uid>.md
 ```
 
 - `<date>` is `YYYY-MM-DD` from the memo's creation time (default) or update time.
 - `<uid>` is the memo's public id, so every memo maps to exactly one file and
-  deletes prune cleanly even when many memos share a date.
+  deletes prune cleanly.
 
 Each file has YAML frontmatter followed by the raw markdown content:
 

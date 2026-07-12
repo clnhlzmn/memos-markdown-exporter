@@ -79,8 +79,8 @@ def sync_once(cfg: Config) -> int:
                 parts = [user_root]
                 if sub:
                     parts.append(sub)
-                parts += [date_dir(memo, cfg.date_basis, cfg.tz),
-                          safe(memo_uid(memo)) + ".md"]
+                date = date_dir(memo, cfg.date_basis, cfg.tz)
+                parts.append(date + "_" + safe(memo_uid(memo)) + ".md")
                 path = os.path.join(*parts)
                 write_if_changed(path, render(memo))
                 written.add(os.path.abspath(path))

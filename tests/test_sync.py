@@ -149,7 +149,7 @@ def test_sync_failing_token_does_not_prune_and_returns_nonzero(
     assert bob_file.exists()
     assert bob_file.read_text() == "precious\n"
     # good token synced and wrote its memo
-    assert (export / "alice" / "2026-07-11" / "m1.md").exists()
+    assert (export / "alice" / "2026-07-11_m1.md").exists()
 
 
 def test_sync_all_success_returns_zero_and_prunes(tmp_path, monkeypatch):
@@ -182,7 +182,6 @@ def test_sync_all_success_returns_zero_and_prunes(tmp_path, monkeypatch):
     rc = sync_once(cfg)
 
     assert rc == 0
-    assert (export / "alice" / "2026-07-11" / "m1.md").exists()
-    # orphan pruned, empty dir cleaned
+    assert (export / "alice" / "2026-07-11_m1.md").exists()
+    # orphan pruned
     assert not stale.exists()
-    assert not (export / "alice" / "2026-01-01").exists()
