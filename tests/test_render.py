@@ -118,10 +118,17 @@ def test_render_frontmatter_shape_and_ordering():
     lines = out.splitlines()
     assert lines[0] == "---"
     assert lines[1] == "uid: abc"
-    assert lines[2] == "created: 2026-07-10T09:00:00Z"
-    assert lines[3] == "updated: 2026-07-11T09:00:00Z"
+    assert lines[2] == "created: 2026-07-10T09:00:00+00:00"
+    assert lines[3] == "updated: 2026-07-11T09:00:00+00:00"
     assert lines[4] == "visibility: PUBLIC"
     assert lines[5] == "pinned: true"
+
+
+def test_render_frontmatter_respects_timezone():
+    tz = ZoneInfo("America/New_York")  # UTC-4 in July (DST)
+    lines = render(_base_memo(), tz).splitlines()
+    assert lines[2] == "created: 2026-07-10T05:00:00-04:00"
+    assert lines[3] == "updated: 2026-07-11T05:00:00-04:00"
 
 
 def test_render_tags_sorted():

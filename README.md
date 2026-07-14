@@ -33,8 +33,8 @@ Each file has YAML frontmatter followed by the raw markdown content:
 ```markdown
 ---
 uid: aBc123
-created: 2026-07-10T09:00:00Z
-updated: 2026-07-11T09:00:00Z
+created: 2026-07-10T09:00:00+00:00
+updated: 2026-07-11T09:00:00+00:00
 visibility: PUBLIC
 pinned: false
 tags:
@@ -85,7 +85,7 @@ All configuration is via environment variables.
 | `MEMOS_TOKENS` | one of these | – | newline/comma-separated tokens |
 | `MEMOS_TOKENS_FILE` | one of these | – | file of tokens, one per line, `#` comments |
 | `MEMOS_DATE_BASIS` | no | `created` | `created` or `updated` |
-| `MEMOS_TIMEZONE` | no | UTC | IANA tz for the `<date>` bucket |
+| `MEMOS_TIMEZONE` | no | UTC | IANA tz for the `<date>` bucket and frontmatter timestamps |
 | `MEMOS_INCLUDE_ARCHIVED` | no | off | `1` to also mirror archived memos under `_archived/` |
 | `MEMOS_VERIFY_TLS` | no | on | `0` to disable TLS verification (self-signed) |
 | `MEMOS_INTERVAL_SECONDS` | no | – | if set, loop forever with this sleep; else run once |
@@ -96,8 +96,10 @@ With `updated`, editing a memo relocates its file to the new date bucket (prunin
 handles the move, so no duplicate is left behind).
 
 **Timezone.** The default is UTC for reproducibility. Set `MEMOS_TIMEZONE` to an
-IANA name (e.g. `America/New_York`) to bucket dates in local time — note this can
-shift a memo created near midnight into the adjacent day's folder.
+IANA name (e.g. `America/New_York`) to bucket dates and render the frontmatter
+`created`/`updated` timestamps in local time (with the UTC offset, e.g.
+`2026-07-11T05:00:00-04:00`) — note this can shift a memo created near midnight
+into the adjacent day's folder.
 
 **Exit code.** The process exits non-zero if *any* token failed, after syncing
 the rest.

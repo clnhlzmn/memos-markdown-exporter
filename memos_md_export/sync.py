@@ -91,7 +91,7 @@ def sync_once(cfg: Config) -> int:
                     stem += "_" + slug
                 parts.append(stem + ".md")
                 path = os.path.join(*parts)
-                write_if_changed(path, render(memo))
+                write_if_changed(path, render(memo, cfg.tz))
                 written.add(os.path.abspath(path))
 
             # Only prune THIS user's tree, and only because their sync succeeded.

@@ -116,10 +116,10 @@ def _yaml_str(s: str) -> str:
     return json.dumps(s, ensure_ascii=False)
 
 
-def render(memo: dict) -> str:
+def render(memo: dict, tz=timezone.utc) -> str:
     uid = memo_uid(memo)
-    created = parse_time(memo["createTime"])
-    updated = parse_time(memo["updateTime"])
+    created = parse_time(memo["createTime"]).astimezone(tz)
+    updated = parse_time(memo["updateTime"]).astimezone(tz)
     visibility = memo.get("visibility", "PRIVATE")
     pinned = bool(memo.get("pinned"))
     content = memo.get("content", "")
@@ -127,8 +127,8 @@ def render(memo: dict) -> str:
     attachments = extract_attachments(memo)
 
     lines = ["---", f"uid: {uid}",
-             f"created: {created.strftime('%Y-%m-%dT%H:%M:%SZ')}",
-             f"updated: {updated.strftime('%Y-%m-%dT%H:%M:%SZ')}",
+             f"created: {created.isoformat(timespec='seconds')}",
+             f"updated: {updated.isoformat(timespec='seconds')}",
              f"visibility: {visibility}", f"pinned: {str(pinned).lower()}"]
     if tags:
         lines.append("tags:")
