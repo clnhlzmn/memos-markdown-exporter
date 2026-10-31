@@ -15,7 +15,7 @@ class MemosClient:
         self.session.verify = verify_tls
 
     def current_user(self) -> dict:
-        r = self.session.get(f"{self.base_url}/api/v1/auth/me", timeout=30)
+        r = self.session.get(f"{self.base_url}/api/auth/me", timeout=30)
         r.raise_for_status()
         user = r.json().get("user") or {}
         if not user.get("name"):
@@ -37,7 +37,7 @@ class MemosClient:
             if page_token:
                 params["pageToken"] = page_token
             r = self.session.get(
-                f"{self.base_url}/api/v1/memos", params=params, timeout=60
+                f"{self.base_url}/api/memos", params=params, timeout=60
             )
             r.raise_for_status()
             body = r.json()
