@@ -22,7 +22,7 @@ def _client(token="tok"):
 def test_current_user_parses_name_and_username():
     responses.add(
         responses.GET,
-        f"{BASE}/api/v1/auth/me",
+        f"{BASE}/api/auth/me",
         json={"user": {"name": "users/7", "username": "alice"}},
         status=200,
     )
@@ -36,7 +36,7 @@ def test_current_user_parses_name_and_username():
 @responses.activate
 def test_current_user_missing_name_raises():
     responses.add(
-        responses.GET, f"{BASE}/api/v1/auth/me", json={"user": {}}, status=200
+        responses.GET, f"{BASE}/api/auth/me", json={"user": {}}, status=200
     )
     with pytest.raises(RuntimeError):
         _client().current_user()
@@ -66,7 +66,7 @@ def test_list_memos_follows_next_page_token_and_sends_filter():
         return (200, {}, json.dumps(body))
 
     responses.add_callback(
-        responses.GET, f"{BASE}/api/v1/memos",
+        responses.GET, f"{BASE}/api/memos",
         callback=cb, content_type="application/json",
     )
 
@@ -85,7 +85,7 @@ def test_list_memos_drops_foreign_creator():
         ],
         "nextPageToken": "",
     }
-    responses.add(responses.GET, f"{BASE}/api/v1/memos", json=body, status=200)
+    responses.add(responses.GET, f"{BASE}/api/memos", json=body, status=200)
     memos = _client().list_memos("users/1", archived=False)
     assert [m["name"] for m in memos] == ["memos/mine"]
 
@@ -100,7 +100,7 @@ def test_list_memos_state_normal_vs_archived():
         return (200, {}, json.dumps({"memos": [], "nextPageToken": ""}))
 
     responses.add_callback(
-        responses.GET, f"{BASE}/api/v1/memos",
+        responses.GET, f"{BASE}/api/memos",
         callback=cb, content_type="application/json",
     )
     _client().list_memos("users/1", archived=True)
@@ -125,7 +125,7 @@ def test_memo_with_attachments_round_trips_into_frontmatter():
         }],
         "nextPageToken": "",
     }
-    responses.add(responses.GET, f"{BASE}/api/v1/memos", json=body, status=200)
+    responses.add(responses.GET, f"{BASE}/api/memos", json=body, status=200)
     memos = _client().list_memos("users/1", archived=False)
     out = render(memos[0])
     assert "attachments:" in out

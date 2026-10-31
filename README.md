@@ -74,6 +74,11 @@ Each user, logged into memos, goes to **Settings → Access Tokens → Create**,
 copies the token. Collect one token per user you want mirrored and hand them to
 the exporter via `MEMOS_TOKENS` or `MEMOS_TOKENS_FILE`.
 
+Requires Memos 26.10.0 or later (the unversioned `/api/...` routes). Memos
+26.10.0 binds access tokens to the user's password hash and rejects tokens
+minted before the upgrade, so tokens from older versions must be re-created;
+changing a password also invalidates that user's tokens.
+
 ## Configuration
 
 All configuration is via environment variables.
